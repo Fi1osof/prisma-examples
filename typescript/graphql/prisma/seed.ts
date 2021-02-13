@@ -31,7 +31,7 @@ const userData: Prisma.UserCreateInput[] = [
     },
   },
   {
-    name: 'Mahmoud',
+    // name: 'Mahmoud',
     email: 'mahmoud@prisma.io',
     posts: {
       create: [
@@ -47,16 +47,31 @@ const userData: Prisma.UserCreateInput[] = [
         },
       ],
     },
+    avatar: "some_avatar wefwefewf",
   },
 ]
 
 async function main() {
   console.log(`Start seeding ...`)
   for (const u of userData) {
-    const user = await prisma.user.create({
-      data: u,
+
+    const userExisted = await prisma.user.findUnique({
+      where: {
+        email: u.email,
+      }
+    });
+
+    const user = await prisma.user.upsert({
+      where: {
+        email: u.email,
+      },
+      create: u,
+      update: {
+        name: !userExisted?.name ? u.name || "no-name" : undefined,
+        avatar: !userExisted?.avatar ? u.avatar || 'default_avatar_url' : undefined,
+      },
     })
-    console.log(`Created user with id: ${user.id}`)
+    console.log(`Created/updated user with id: ${user.id}`)
   }
   console.log(`Seeding finished.`)
 }

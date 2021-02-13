@@ -8,6 +8,7 @@ import {
   arg,
   asNexusMethod,
   enumType,
+  booleanArg,
 } from 'nexus'
 import { GraphQLDateTime } from 'graphql-iso-date'
 
@@ -17,9 +18,14 @@ const Query = objectType({
   name: 'Query',
   definition(t) {
     t.nonNull.list.nonNull.field('allUsers', {
-      type: 'User',
+      type: User,
       resolve: (_parent, _args, context) => {
-        return context.prisma.user.findMany()
+
+        return context.prisma.user.findMany().then(users => users.map(user => ({
+          ...user,
+          test: user.id === 1 ? "fwefw" : null,
+        })));
+
       },
     })
 
@@ -36,8 +42,12 @@ const Query = objectType({
     })
 
     t.nonNull.list.nonNull.field('feed', {
-      type: 'Post',
+      type: Post,
       args: {
+        published: booleanArg({
+          default: true,
+          description: "Показывать только опубликованные записи"
+        }),
         searchString: stringArg(),
         skip: intArg(),
         take: intArg(),
@@ -48,16 +58,17 @@ const Query = objectType({
       resolve: (_parent, args, context) => {
         const or = args.searchString
           ? {
-              OR: [
-                { title: { contains: args.searchString } },
-                { content: { contains: args.searchString } },
-              ],
-            }
+            OR: [
+              { title: { contains: args.searchString } },
+              { content: { contains: args.searchString } },
+            ],
+          }
           : {}
 
         return context.prisma.post.findMany({
           where: {
-            published: true,
+            // published: typeof args.published  === "boolean" ? args.published : undefined,
+            published: args.published !== null ? args.published : undefined,
             ...or,
           },
           take: args.take || undefined,
@@ -203,10 +214,17 @@ const Mutation = objectType({
 
 const User = objectType({
   name: 'User',
+  sourceType: {
+    module: '@prisma/client',
+    export: 'User',
+  },
   definition(t) {
     t.nonNull.int('id')
     t.string('name')
-    t.nonNull.string('email')
+    t.nonNull.string('email', {
+      resolve: (user) => user.test || user.email,
+    })
+    // t.nonNull.string('email')
     t.nonNull.list.nonNull.field('posts', {
       type: 'Post',
       resolve: (parent, _, context) => {

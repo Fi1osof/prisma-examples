@@ -38,7 +38,15 @@ input PostOrderByUpdatedAtInput {
 type Query {
   allUsers: [User!]!
   draftsByUser(userUniqueInput: UserUniqueInput!): [Post]
-  feed(orderBy: PostOrderByUpdatedAtInput, searchString: String, skip: Int, take: Int): [Post!]!
+  feed(
+    orderBy: PostOrderByUpdatedAtInput
+
+    """Показывать только опубликованные записи"""
+    published: Boolean = true
+    searchString: String
+    skip: Int
+    take: Int
+  ): [Post!]!
   postById(id: Int): Post
 }
 

@@ -2,6 +2,8 @@
   "name": "typescript-graphql",
   "license": "MIT",
   "scripts": {
+    "migrate": "yarn prisma migrate dev --name init --preview-feature",
+    "seed": "yarn prisma db seed --preview-feature",
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src/server",
     "start": "node dist/server",
     "clean": "rm -rf dist",
